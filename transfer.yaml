@@ -1,0 +1,19 @@
+config:
+  host: localhost
+  port: 8022
+  user: test
+  pass: "test" # optional, if not given, we try certificate auth
+  insecure: true # ignore host certificate
+transfer:
+  # copy folder to path and ignore patterns
+  - from: /home/ubuntu/test.txt
+    to: /Users/tsatke/Desktop/test/test.txt
+    ignore:
+      - "**/.DS_Store"
+  # copy folder to same path
+  - from: /home/ubuntu/foobar/foo.txt
+    to: /Users/tsatke/Desktop/test/foobar/foobar.txt
+  - from: /home/ubuntu/foobar
+    to: /Users/tsatke/Desktop/test/foobar1
+  - from: /home/ubuntu
+    to: /Users/tsatke/Desktop/test/home-ubuntu
