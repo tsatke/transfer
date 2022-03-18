@@ -13,7 +13,39 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/afero"
 	"github.com/spf13/afero/sftpfs"
+	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh"
+)
+
+var (
+	root = &cobra.Command{
+		Use: "transfer",
+		Long: `Transfer files and whole directories via ssh (sftp) from
+a remote host to the local machine. The transfer is executed based on
+steps that are given in a transfer config. Supported config formats
+are yaml, json, and everything that is supported by github.com/spf13/viper.`,
+		Example: `transfer
+transfer my-transfer-config.yaml
+transfer my-transfer-config.json
+
+Example config (yaml):
+
+config:
+  host: myserver # the remote host that is used
+  port: 8022     # the remote port that we will connect to
+  user: test     # the username
+  pass: "test"   # optional, but probably needed
+  insecure: true # ignore host certificate. DO NOT USE THIS
+transfer:
+  - from: /home/ubuntu/test.txt
+    to: /Users/thisisme/Desktop/test/test.txt
+  - from: /home/ubuntu/foobar
+    to: /Users/thisisme/Desktop/test/foobar1
+  - from: /home/ubuntu
+    to: /Users/thisisme/Desktop/test/home-ubuntu`,
+		Args: cobra.MaximumNArgs(1),
+		Run:  run,
+	}
 )
 
 func main() {
@@ -22,9 +54,22 @@ func main() {
 		Timestamp().
 		Logger()
 
+	if err := root.Execute(); err != nil {
+		log.Fatal().
+			Err(err).
+			Msg("execute")
+	}
+}
+
+func run(_ *cobra.Command, args []string) {
 	localFs := afero.NewOsFs()
 
-	cfg := NewConfig(localFs)
+	var cfg *Config
+	if len(args) > 0 {
+		cfg = NewConfigFromFile(localFs, args[0])
+	} else {
+		cfg = NewConfig(localFs)
+	}
 	host := cfg.GetString("config.host")
 	port := cfg.GetString("config.port")
 	user := cfg.GetString("config.user")
